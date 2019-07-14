@@ -7,29 +7,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script type="text/x-mathjax-config">
         MathJax.Hub.Config({
-            extensions: ["tex2jax.js"],
-            jax: ["input/TeX", "output/HTML-CSS"],
-            tex2jax: {
-                inlineMath: [ ['$', '$'], ["\\(", "\\)"] ],
-                displayMath: [ ['$$', '$$'], ["\\[", "\\]"] ],
-                processEscapes: true
-            },
-            "HTML-CSS": { fonts: ["TeX"] }
-        });
-    </script>
-    <script type="text/javascript" async
-            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML">
-    </script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font: 13px Helvetica, Arial; }
-        form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-        form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-        form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-        #messages { list-style-type: none; margin: 0; padding: 0; }
-        #messages li { padding: 5px 10px; }
-        #messages li:nth-child(odd) { background: #eee; }
-    </style>
+        extensions: ["tex2jax.js"],
+        jax: ["input/TeX", "output/HTML-CSS"],
+        tex2jax: {
+        inlineMath: [ ['$', '$'], ["\\(", "\\)"] ],
+        displayMath: [ ['$$', '$$'], ["\\[", "\\]"] ],
+        processEscapes: true
+    },
+    "HTML-CSS": { fonts: ["TeX"] }
+});
+</script>
+<script type="text/javascript" async
+src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML">
+</script>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font: 13px Helvetica, Arial; }
+    form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+    form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+    form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+    #messages { list-style-type: none; margin: 0; padding: 0; }
+    #messages li { padding: 5px 10px; }
+    #messages li:nth-child(odd) { background: #eee; }
+</style>
 </head>
 <body>
     <h2 id='roomHeader'>room id: </h2>
@@ -40,6 +40,26 @@
 
 
     <script type="text/javascript">
+        // gets the timestamp in date time format
+        function getTimeStamp() {
+            var now = new Date();
+            return ((now.getMonth() + 1) + '/' +
+                (now.getDate()) + '/' +
+                now.getFullYear() + " " +
+                now.getHours() + ':' +
+                ((now.getMinutes() < 10)
+                    ? ("0" + now.getMinutes())
+                    : (now.getMinutes())) + ':' +
+                ((now.getSeconds() < 10)
+                    ? ("0" + now.getSeconds())
+                    : (now.getSeconds())));
+        }
+
+        // takes in a string and returns the 
+        function timestampMessage(msg, username){
+            return getTimeStamp() + " " + username + ": " + msg;
+        }
+
         $(function () {
             // generate a new socket that connects to the server
             var socket = io.connect();
@@ -47,6 +67,8 @@
             var room  = window.location.pathname;
             // tell the server that the client wishes to join a room
             socket.emit('room', room);
+
+            socket.username = "Anonymous";
             $('#roomHeader').append(room.substring(1));
             // when they hit the submit button
             $('form').submit(function(e){
@@ -54,8 +76,22 @@
                 var msg = $('#m').val();
                 // check to make sure the message is not null/empty
                 if (msg.trim() != ''){
+                    //check if the message is a command
+                    if (msg.startsWith('/nick ')){
+                        name = msg.substring(5);
+                        socket.username = name;
+                        socket.emit('nameChange', socket.username); 
+                    }
+                    else {
+                    // adding a timestamp and username to the message
+                    msg = timestampMessage(msg, socket.username);
+                    // send the message over to the server
                     socket.emit('chat', msg);
+                    // append it to the local message board
                     $('#messages').append($('<li>').text(msg));
+                }
+
+                    // clear the text input bar
                     $('#m').val('');
                     // typeset any new math
                     // TODO only typeset the new list element
