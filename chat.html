@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>transverse</title>
+    <link rel = 'stylesheet' type='text/css' href='/css/stylesheet.css'>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
@@ -20,54 +21,20 @@
     <script type="text/javascript" async
             src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML">
     </script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font: 13px Helvetica, Arial; }
-        form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-        form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-        form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-        #messages { list-style-type: none; margin: 0; padding: 0; }
-        #messages li { padding: 5px 10px; }
-        #messages li:nth-child(odd) { background: #eee; }
-    </style>
 </head>
 <body>
-    <h2 id='roomHeader'>room id: </h2>
+    <header>
+        <h2 id='roomHeader'>room id: </h2>
+    </header>
+    <section id='chat'>
     <ul id="messages"></ul>
     <form action="">
         <input id="m" autocomplete="off" autofocus/><button>Send</button>
     </form>
-
-
-    <script type="text/javascript">
-        $(function () {
-            // generate a new socket that connects to the server
-            var socket = io.connect();
-            //gets the pathname, which is actually the room name
-            var room  = window.location.pathname;
-            // tell the server that the client wishes to join a room
-            socket.emit('room', room);
-            $('#roomHeader').append(room.substring(1));
-            // when they hit the submit button
-            $('form').submit(function(e){
-                e.preventDefault();
-                var msg = $('#m').val();
-                // check to make sure the message is not null/empty
-                if (msg.trim() != ''){
-                    socket.emit('chat', msg);
-                    $('#messages').append($('<li>').text(msg));
-                    $('#m').val('');
-                    // typeset any new math
-                    // TODO only typeset the new list element
-                    MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
-                }
-                
-            });
-            // when the server tells the client that there has been a message sent
-            socket.on('chat',function(msg){
-                $('#messages').append($('<li>').text(msg));
-            });
-        });
-    </script>
+    </section>
+    <section id='sidebar'>
+    </section>
+    <footer>
+    </footer>
 </body>
 </html>
