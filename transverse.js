@@ -1,7 +1,10 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
-var fs = require('fs')
+var fs = require('fs');
+
+app.use(express.static('public'))
 
 const port = 3000;
 
@@ -11,7 +14,6 @@ app.get('/', function(req, res){
 });
 
 app.get('/:room', function(req, res){
-    console.log(req.params.room);
     res.sendFile(__dirname + '/chat.html');
 });
 
@@ -23,14 +25,17 @@ http.listen(port,'0.0.0.0', function(){
 
 // what to do when a client connects to the server
 io.sockets.on('connection', function(socket){
+    var currentRoom;
     // we expect the client to send the room name that they want to connect to
     socket.on('room', function(room){
         socket.join(room);
+        currentRoom = room
+        console.log("User joined room " + room)
     });
 
     // What to do when a client sends a message to their room
     socket.on('chat', function(msg){
-
+        socket.to(currentRoom).emit('chat', msg);
     });
 
     // What to do when a client sends a command to their room
@@ -39,7 +44,7 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on('disconnect', function(){
-        console.log("user has disconnected");
+        console.log("user has disconnected from room " + currentRoom);
     });
 
 });
