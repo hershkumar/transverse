@@ -25,7 +25,7 @@ $(function () {
     var room  = window.location.pathname;
     // tell the server that the client wishes to join a room
     socket.emit('room', room);
-
+    // set the default username for the socket
     socket.username = "Anonymous";
     $('#roomHeader').append(room.substring(1));
     // when they hit the submit button
@@ -37,12 +37,17 @@ $(function () {
             //check if the message is a command
             if (msg.startsWith('/nick ')){
                 name = msg.substring(5);
-                socket.username = name;
-                socket.emit('nameChange', socket.username); 
+                // check to make sure the name isn't empty
+                if (name.trim() != ''){
+                    //change the name clientside
+                    socket.username = name;
+                    // request for the name to be changed serverside
+                    socket.emit('nameChange', socket.username); 
+                }
             }
             else {
             // adding a timestamp and username to the message
-            msg = timestampMessage(msg, socket.username);
+            //msg = timestampMessage(msg, socket.username);
             // send the message over to the server
             socket.emit('chat', msg);
             // append it to the local message board
@@ -60,5 +65,14 @@ $(function () {
     // when the server tells the client that there has been a message sent
     socket.on('chat',function(msg){
         $('#messages').append($('<li>').text(msg));
+    });
+    // TODO: get rid of this in favor of socket.id on disconnect
+    socket.on('sidebar', function(rooms, onlineUsers){
+        var sidebarUsernames = [];
+        //get which index we have to index into to get our room's online users
+        var index = rooms.indexOf(room);
+        sidebarUsernames = onlineUsers[index];
+        // TODO: append sidebarUsernames to the sidebar here
+
     });
 });
