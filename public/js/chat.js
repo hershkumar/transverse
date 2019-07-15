@@ -33,7 +33,7 @@ $(function () {
         e.preventDefault();
         var msg = $('#m').val();
         // check to make sure the message is not null/empty
-        if (msg.trim() != ''){
+        if (msg.trim() != '') {
             //check if the message is a command
             if (msg.startsWith('/nick ')){
                 name = msg.substring(5);
@@ -46,13 +46,24 @@ $(function () {
                 }
             }
             else {
-            // adding a timestamp and username to the message
-            //msg = timestampMessage(msg, socket.username);
-            // send the message over to the server
-            socket.emit('chat', msg);
-            // append it to the local message board
-            $('#messages').append($('<li>').text(msg));
-        }
+                // adding a timestamp and username to the message
+                //msg = timestampMessage(msg, socket.username);
+                msg = socket.username + ": " + msg;
+                // send the message over to the server
+                socket.emit('chat', msg);
+
+                // append it to the local message board
+                $('#messages').append($('<li>').text(msg));
+
+                // check whether the user is scrolled to the bottom
+                // the 35 error seems to be padding or something
+                // code taken from dotnetCarpenter at
+                // https://stackoverflow.com/questions/18614301/keep-overflow-div-scrolled-to-bottom-unless-user-scrolls-up
+                chatPane = document.getElementById('messages');
+                isScrolledToBottom = chatPane.scrollHeight - chatPane.clientHeight <= chatPane.scrollTop + 35;
+                if(isScrolledToBottom)
+                    chatPane.scrollTop = chatPane.scrollHeight - chatPane.clientHeight;
+            }
 
             // clear the text input bar
             $('#m').val('');
@@ -65,6 +76,9 @@ $(function () {
     // when the server tells the client that there has been a message sent
     socket.on('chat',function(msg){
         $('#messages').append($('<li>').text(msg));
+        // typeset any new math
+        // TODO only typeset the new list element
+        MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
     });
     // TODO: get rid of this in favor of socket.id on disconnect
     socket.on('sidebar', function(rooms, onlineUsers){
