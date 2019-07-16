@@ -110,8 +110,9 @@ $(function () {
     // when the server tells the client that there has been a message sent
     // add the message to the chat log
     // TODO make the message contents indent
-    socket.on('chat',function(msg){
-        $('#messages').append($('<li>').text(msg));
+    socket.on('chat', function(msgObject) {
+        // <li id='' username=''>
+        $('#messages').append($('<li>').attr('id', msgObject.id).attr('username', msgObject.username).text(msgObject.message));
         // typeset any new math
         // TODO only typeset the new list element
         MathJax.Hub.Queue(["Typeset", MathJax.Hub]);

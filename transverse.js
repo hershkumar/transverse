@@ -61,9 +61,12 @@ io.sockets.on('connection', function(socket){
         socket.emit('sendConnected', getUsernames(currentRoom));
         var conMsg  = clientIp + " ("+ socket.username +") has connected to room " + currentRoom;
         console.log(conMsg);
-        var msg = socket.username + " has connected";
+
+        // TODO add connected message
+        //var msg = socket.username + " has connected";
         // send a message to the rest of the users online
-        io.in(currentRoom).emit('chat', msg);
+        //io.in(currentRoom).emit('chat', msg);
+        
         // send the socket id of the new socket to the clients
         io.in(currentRoom).emit('sendUserConnect', socket.id);
     }); 
@@ -87,11 +90,20 @@ io.sockets.on('connection', function(socket){
                 + msg + "');";
             // write the new message to the database
             db.run(insertString);
+
+            // prepare a message object to send to everyone in the room
+            msgObject = {
+                'id' : thisId,
+                'username': socket.username,
+                'message': msg
+            };
+            // send this to all users in the room
+            io.in(currentRoom).emit('chat', msgObject);
+            // TODO server console log
+            // log the message
+            //console.log("\""+msgObject.msg +"\"" + " in room "+ currentRoom);
         });
-        // send this message to all users in the room
-        io.in(currentRoom).emit('chat', msg);
-        //log the message
-        console.log("\""+msg +"\"" + " in room "+ currentRoom);
+
     });
 
     // what to do when someone changes their name
@@ -102,12 +114,13 @@ io.sockets.on('connection', function(socket){
     });
 
     // what to do when someone disconnects
+    // TODO fix this
     socket.on('disconnect', function(){
         var conMsg  = clientIp + " ("+ socket.username +") has disconnected from room " + currentRoom;
         console.log(conMsg);
         var msg = socket.username + " has disconnected";
         // send a message to the rest of the users online
-        io.in(currentRoom).emit('chat', msg);
+        // io.in(currentRoom).emit('chat', msg);
         io.in(currentRoom).emit('sendUserDisconnect', socket.id);
     });
 });
