@@ -61,12 +61,9 @@ io.sockets.on('connection', function(socket){
         socket.emit('sendConnected', getUsernames(currentRoom));
         var conMsg  = clientIp + " ("+ socket.username +") has connected to room " + currentRoom;
         console.log(conMsg);
-
-        // TODO add connected message
-        //var msg = socket.username + " has connected";
-        // send a message to the rest of the users online
-        //io.in(currentRoom).emit('chat', msg);
-        
+        var connectMessage = socket.username + " has connected to the room";
+        // logs the message in the database and sends it to the clients
+        sendAndLogChat(currentRoom, connectMessage, socket.username);
         // send the socket id of the new socket to the clients
         io.in(currentRoom).emit('sendUserConnect', socket.id);
     }); 
@@ -74,36 +71,7 @@ io.sockets.on('connection', function(socket){
 
     // What to do when a client sends a message to their room
     socket.on('chat', function(msg){
-        var lastId = 0;
-        var thisId;
-        // get the last message entry in the room
-        db.get('select * from m_' + currentRoom + ' order by id desc limit 1;', function(err, row) {
-            if(err) return console.error(err.message);
-            // find the id of the last message in this room
-            if(row) lastId = row.id;
-            // the new message should have an incremented id
-            // this will be one if the room has no messages in it yet
-            let thisId = lastId + 1;
-            var insertString = "insert into m_" + currentRoom + " values ("
-                + thisId + ", '"
-                + socket.username + "', '"
-                + msg + "');";
-            // write the new message to the database
-            db.run(insertString);
-
-            // prepare a message object to send to everyone in the room
-            msgObject = {
-                'id' : thisId,
-                'username': socket.username,
-                'message': msg
-            };
-            // send this to all users in the room
-            io.in(currentRoom).emit('chat', msgObject);
-            // TODO server console log
-            // log the message
-            //console.log("\""+msgObject.msg +"\"" + " in room "+ currentRoom);
-        });
-
+        sendAndLogChat(currentRoom, msg, socket.username);
     });
 
     // what to do when someone changes their name
@@ -114,13 +82,11 @@ io.sockets.on('connection', function(socket){
     });
 
     // what to do when someone disconnects
-    // TODO fix this
     socket.on('disconnect', function(){
         var conMsg  = clientIp + " ("+ socket.username +") has disconnected from room " + currentRoom;
         console.log(conMsg);
-        var msg = socket.username + " has disconnected";
-        // send a message to the rest of the users online
-        // io.in(currentRoom).emit('chat', msg);
+        var disconnectMessage = socket.username + " has left the room";
+        sendAndLogChat(currentRoom, disconnectMessage, socket.username);
         io.in(currentRoom).emit('sendUserDisconnect', socket.id);
     });
 });
@@ -180,4 +146,33 @@ function getOnlineUsers(){
         
     }
     return onlineUsers;
+}
+
+function sendAndLogChat(room, messageText, username){
+    var lastId = 0;
+    var thisId;
+    // get the last message entry in the room
+    db.get('select * from m_' + room + ' order by id desc limit 1;', function(err, row) {
+        if(err) return console.error(err.message);
+        // find the id of the last message in this room
+        if(row) lastId = row.id;
+        // the new message should have an incremented id
+        // this will be one if the room has no messages in it yet
+        let thisId = lastId + 1;
+        var insertString = "insert into m_" + room + " values ("
+            + thisId + ", '"
+            + username + "', '"
+            + messageText + "');";
+        // write the new message to the database
+        db.run(insertString);
+
+        // prepare a message object to send to everyone in the room
+        msgObject = {
+            'id' : thisId,
+            'username': username,
+            'message': messageText
+        };
+        // send this to all users in the room
+        io.in(room).emit('chat', msgObject);
+    }); 
 }
