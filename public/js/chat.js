@@ -1,3 +1,4 @@
+var socketsConnected = {};
 // gets the timestamp in date time format
 function getTimeStamp() {
     var now = new Date();
@@ -13,9 +14,19 @@ function getTimeStamp() {
             : (now.getSeconds())));
 }
 
-// takes in a string and returns the 
+// takes in a string and returns the timestamped message
 function timestampMessage(msg, username){
     return getTimeStamp() + " " + username + ": " + msg;
+}
+// updates the sidebar element that lists all the users in the room (#users)
+function displayUsers(){
+    //clears the list for rewriting
+    $('#users').empty();
+    // write every username to the list
+    for (key in socketsConnected){
+        // add a new list element with the username of the socket
+        $('#users').append('<li>'+ socketsConnected[key] + '</li>');    
+    }
 }
 
 $(function () {
@@ -27,7 +38,10 @@ $(function () {
     socket.emit('room', room);
     // set the default username for the socket
     socket.username = "Anonymous";
-    $('#roomHeader').append(room.substring(1));
+    // store the id of this socket for later use
+    var id = socket.id;
+    // show the room id on the page
+    $('#roomHeader').append(decodeURI(room.substring(1)));
 
     // TeX preview handler
     $('#m').on('input', function() {
@@ -37,6 +51,7 @@ $(function () {
         MathJax.Hub.Queue(["Typeset", MathJax.Hub, math]);
     });
 
+    
     // when they hit the submit button
     $('form').submit(function(e){
         e.preventDefault();
@@ -72,6 +87,8 @@ $(function () {
                 // the 35 error seems to be padding or something
                 // code taken from dotnetCarpenter at
                 // https://stackoverflow.com/questions/18614301/keep-overflow-div-scrolled-to-bottom-unless-user-scrolls-up
+                // TODO: When entering full math mode stuff ($$blah$$), the scrolling
+                // doesn't scroll all the way down to the end of the MathJax render
                 chatPane = document.getElementById('messages');
                 isScrolledToBottom = chatPane.scrollHeight - chatPane.clientHeight <= chatPane.scrollTop + 35;
                 if(isScrolledToBottom)
@@ -93,13 +110,28 @@ $(function () {
         // TODO only typeset the new list element
         MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
     });
-    // TODO: get rid of this in favor of socket.id on disconnect
-    socket.on('sidebar', function(rooms, onlineUsers){
-        var sidebarUsernames = [];
-        //get which index we have to index into to get our room's online users
-        var index = rooms.indexOf(room);
-        sidebarUsernames = onlineUsers[index];
-        // TODO: append sidebarUsernames to the sidebar here
 
+    // server telling us that someone from the room has disconnected
+    socket.on('sendUserDisconnect', function(id){
+        // the server has sent over the id of the socket that disconnected from the room
+        delete socketsConnected[id];
+        displayUsers();
+    });
+    // the server telling us that someone has connected to the room
+    socket.on('sendUserConnect', function(id){
+        // server sends the id of the new socket
+        socketsConnected[id] = "Anonymous";
+        displayUsers();
+    });
+    // the server telling us that someone in the room has changed their name
+    socket.on('sendUserChangeName', function(id, newName){
+        socketsConnected[id] = newName;
+        displayUsers();
+    });
+    // the server sending a list of people who are in the room already
+    socket.on('sendConnected', function(sockets){
+        // give the client the list of already connected clients
+        socketsConnected = sockets;
+        displayUsers();
     });
 });

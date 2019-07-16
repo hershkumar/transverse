@@ -12,7 +12,7 @@ var users = [];
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
-
+// serve the chat.html file if they go to a subdomain
 app.get('/:room', function(req, res){
     res.sendFile(__dirname + '/chat.html');
 });
@@ -32,15 +32,25 @@ io.sockets.on('connection', function(socket){
     var clientIp = socket.request.connection.remoteAddress;
     // we expect the client to send the room name that they want to connect to
     socket.on('room', function(room){
+        // add the room to the rooms list if it doesnt exist already
         if (!rooms.includes(room)){
             rooms.push(room);
         }
+        // add the client socket to the room
         socket.join(room);
         currentRoom = room;
-        console.log("User joined room " + room);
-        users = getOnlineUsers();
-        socket.emit('sidebar', rooms, users);
+        // send the newly connected user a dictionary of connected sockets with usernames
+        socket.emit('sendConnected', getUsernames(currentRoom));
+        var conMsg  = clientIp + " ("+ socket.username +") has connected to room " + currentRoom;
+        console.log(conMsg);
+        var msg = socket.username + " has connected";
+        // send a message to the rest of the users online
+        socket.to(currentRoom).emit('chat', msg);
+        // send the socket id of the new socket to the clients
+        io.in(currentRoom).emit('sendUserConnect', socket.id);
     }); 
+
+
     // What to do when a client sends a message to their room
     socket.on('chat', function(msg){
         // send this message to all users in the room
@@ -48,22 +58,20 @@ io.sockets.on('connection', function(socket){
         //log the message
         console.log("\""+msg +"\"" + " in room "+ currentRoom);
     });
-
+    // what to do when someone changes their name
     socket.on('nameChange', function(newName){
         // change the username serverside
         socket.username = newName;
-        users = getOnlineUsers();
-        socket.emit('sidebar', rooms, users);
+        io.in(currentRoom).emit('sendUserChangeName', socket.id, newName);
     });
-
+    // what to do when someone disconnects
     socket.on('disconnect', function(){
-        var msg  = clientIp + " ("+ socket.username +") has disconnected from room " + currentRoom;
-        console.log(msg);
-        //console.log(socket.id);
-        // send a message to the rest wof the users online
+        var conMsg  = clientIp + " ("+ socket.username +") has disconnected from room " + currentRoom;
+        console.log(conMsg);
+        var msg = socket.username + " has disconnected";
+        // send a message to the rest of the users online
         socket.to(currentRoom).emit('chat', msg);
-        users = getOnlineUsers();
-        socket.emit('sidebar', rooms, users);
+        io.in(currentRoom).emit('sendUserDisconnect', socket.id);
     });
 
 });
@@ -82,8 +90,6 @@ function getTimeStamp() {
             ? ("0" + now.getSeconds())
             : (now.getSeconds())));
 }
-
-// These should be removed eventually
 // helper function for getOnlineUsers()
 function updateRooms(){
     // check whether there are currently rooms defined
@@ -102,23 +108,27 @@ function updateRooms(){
 }
 // helper function for updateRooms
 function getUsernames(roomName){
-    var usernames = [];
+    var returned = {};
     clients = io.sockets.adapter.rooms[roomName];
     if (typeof clients != "undefined"){
         socketIds = Object.keys(clients['sockets']);
         for (i in socketIds){
             sock = io.sockets.connected[socketIds[i]];
-            usernames.push(sock.username);
+            returned[sock.id] = sock.username;
         }
     }
-    return usernames;
+    return returned;
 }
-
+// gets an array of arrays, each internal array has a list of usernames for socketsin the rooms
 function getOnlineUsers(){
     var onlineUsers = [];
     updateRooms();
     for(var i = 0; i < rooms.length; i++){
-        onlineUsers.push(getUsernames(rooms[i]));
+        var temp = getUsernames(room[i]);
+        for (key in temp){
+            onlineUsers.push(temp[key]);    
+        }
+        
     }
     return onlineUsers;
 }
