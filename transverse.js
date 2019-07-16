@@ -8,10 +8,12 @@ app.use(express.static('public'))
 var rooms = [];
 const port = 3000;
 var users = [];
+
 //serve index.html
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
+
 // serve the chat.html file if they go to a subdomain
 app.get('/:room', function(req, res){
     res.sendFile(__dirname + '/chat.html');
@@ -28,7 +30,7 @@ io.sockets.on('connection', function(socket){
     var currentRoom;
     var clients;
     var socketIds;
-    socket.username = "Anonymous";
+    socket.username = "anon#" + socket.id.substring(0,3);
     var clientIp = socket.request.connection.remoteAddress;
     // we expect the client to send the room name that they want to connect to
     socket.on('room', function(room){
@@ -45,7 +47,7 @@ io.sockets.on('connection', function(socket){
         console.log(conMsg);
         var msg = socket.username + " has connected";
         // send a message to the rest of the users online
-        socket.to(currentRoom).emit('chat', msg);
+        io.in(currentRoom).emit('chat', msg);
         // send the socket id of the new socket to the clients
         io.in(currentRoom).emit('sendUserConnect', socket.id);
     }); 
@@ -54,7 +56,7 @@ io.sockets.on('connection', function(socket){
     // What to do when a client sends a message to their room
     socket.on('chat', function(msg){
         // send this message to all users in the room
-        socket.to(currentRoom).emit('chat', msg);
+        io.in(currentRoom).emit('chat', msg);
         //log the message
         console.log("\""+msg +"\"" + " in room "+ currentRoom);
     });
@@ -70,10 +72,9 @@ io.sockets.on('connection', function(socket){
         console.log(conMsg);
         var msg = socket.username + " has disconnected";
         // send a message to the rest of the users online
-        socket.to(currentRoom).emit('chat', msg);
+        io.in(currentRoom).emit('chat', msg);
         io.in(currentRoom).emit('sendUserDisconnect', socket.id);
     });
-
 });
 
 // gets the timestamp in date time format
@@ -90,7 +91,7 @@ function getTimeStamp() {
             ? ("0" + now.getSeconds())
             : (now.getSeconds())));
 }
-// helper function for getOnlineUsers()
+// helper function for getOnlineUsers
 function updateRooms(){
     // check whether there are currently rooms defined
     if (typeof rooms != "undefined"){
@@ -119,7 +120,7 @@ function getUsernames(roomName){
     }
     return returned;
 }
-// gets an array of arrays, each internal array has a list of usernames for socketsin the rooms
+// gets an array of arrays, each internal array has a list of usernames for sockets in the rooms
 function getOnlineUsers(){
     var onlineUsers = [];
     updateRooms();

@@ -28,18 +28,22 @@ function displayUsers(){
         $('#users').append('<li>'+ socketsConnected[key] + '</li>');    
     }
 }
-
+//TODO: make sure mathjax is loaded before users can send messages
 $(function () {
     // generate a new socket that connects to the server
     var socket = io.connect();
+    var id;
+    // TODO: Do we need to move stuff in here?
+    socket.on('connect', function(){
+        id = socket.id;
+        // set the default username for the socket
+        socket.username = "anon#" + id.substring(0,3);    
+    });
     //gets the pathname, which is actually the room name
     var room  = window.location.pathname;
     // tell the server that the client wishes to join a room
     socket.emit('room', room);
-    // set the default username for the socket
-    socket.username = "Anonymous";
-    // store the id of this socket for later use
-    var id = socket.id;
+
     // show the room id on the page
     $('#roomHeader').append(decodeURI(room.substring(1)));
 
@@ -67,6 +71,7 @@ $(function () {
                 name = msg.substring(5);
                 // check to make sure the name isn't empty
                 if (name.trim() != ''){
+                    //TODO: request first and change username after approval
                     //change the name clientside
                     socket.username = name;
                     // request for the name to be changed serverside
@@ -79,9 +84,6 @@ $(function () {
                 msg = socket.username + ": " + msg;
                 // send the message over to the server
                 socket.emit('chat', msg);
-
-                // append it to the local message board
-                $('#messages').append($('<li>').text(msg));
 
                 // check whether the user is scrolled to the bottom
                 // the 35 error seems to be padding or something
@@ -111,6 +113,8 @@ $(function () {
         MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
     });
 
+
+    //// These handlers are for the user list that is displayed in the sidebar
     // server telling us that someone from the room has disconnected
     socket.on('sendUserDisconnect', function(id){
         // the server has sent over the id of the socket that disconnected from the room
@@ -119,8 +123,9 @@ $(function () {
     });
     // the server telling us that someone has connected to the room
     socket.on('sendUserConnect', function(id){
+        //TODO: remove hardcoding of default username
         // server sends the id of the new socket
-        socketsConnected[id] = "Anonymous";
+        socketsConnected[id] = "anon#" + id.substring(0,3);
         displayUsers();
     });
     // the server telling us that someone in the room has changed their name
