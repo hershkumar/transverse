@@ -41,7 +41,7 @@ $(function () {
     // store the id of this socket for later use
     var id = socket.id;
     // show the room id on the page
-    $('#roomHeader').append(room.substring(1));
+    $('#roomHeader').append(decodeURI(room.substring(1)));
     // when they hit the submit button
     $('form').submit(function(e){
         e.preventDefault();

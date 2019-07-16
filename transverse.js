@@ -12,7 +12,7 @@ var users = [];
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
-
+// serve the chat.html file if they go to a subdomain
 app.get('/:room', function(req, res){
     res.sendFile(__dirname + '/chat.html');
 });
@@ -32,9 +32,11 @@ io.sockets.on('connection', function(socket){
     var clientIp = socket.request.connection.remoteAddress;
     // we expect the client to send the room name that they want to connect to
     socket.on('room', function(room){
+        // add the room to the rooms list if it doesnt exist already
         if (!rooms.includes(room)){
             rooms.push(room);
         }
+        // add the client socket to the room
         socket.join(room);
         currentRoom = room;
         // send the newly connected user a dictionary of connected sockets with usernames
@@ -56,13 +58,13 @@ io.sockets.on('connection', function(socket){
         //log the message
         console.log("\""+msg +"\"" + " in room "+ currentRoom);
     });
-
+    // what to do when someone changes their name
     socket.on('nameChange', function(newName){
         // change the username serverside
         socket.username = newName;
         io.in(currentRoom).emit('sendUserChangeName', socket.id, newName);
     });
-
+    // what to do when someone disconnects
     socket.on('disconnect', function(){
         var conMsg  = clientIp + " ("+ socket.username +") has disconnected from room " + currentRoom;
         console.log(conMsg);
@@ -88,8 +90,6 @@ function getTimeStamp() {
             ? ("0" + now.getSeconds())
             : (now.getSeconds())));
 }
-
-
 // helper function for getOnlineUsers()
 function updateRooms(){
     // check whether there are currently rooms defined
