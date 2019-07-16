@@ -28,9 +28,22 @@ $(function () {
     // set the default username for the socket
     socket.username = "Anonymous";
     $('#roomHeader').append(room.substring(1));
+
+    // TeX preview handler
+    $('#m').on('input', function() {
+        jaxCode = $('#m').val();
+        $('#preview').text(jaxCode);
+        var math = document.getElementById("preview");
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, math]);
+    });
+
     // when they hit the submit button
     $('form').submit(function(e){
         e.preventDefault();
+
+        // clear the preview text
+        $('#preview').empty();
+
         var msg = $('#m').val();
         // check to make sure the message is not null/empty
         if (msg.trim() != '') {
