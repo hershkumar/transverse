@@ -3,11 +3,17 @@ var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var fs = require('fs');
+var sqlite3 = require('sqlite3').verbose();
 
 app.use(express.static('public'))
 var rooms = [];
 const port = 3000;
 var users = [];
+
+// initialize sqlite3 database
+console.log('Initializing messages database...');
+var db = new sqlite3.Database('./db/messages.db');
+console.log('...done.');
 
 //serve index.html
 app.get('/', function(req, res){
@@ -34,6 +40,16 @@ io.sockets.on('connection', function(socket){
     var clientIp = socket.request.connection.remoteAddress;
     // we expect the client to send the room name that they want to connect to
     socket.on('room', function(room){
+        // initialize the table of messages for the room
+        // called 'm_room' with fields id, username, message content
+        console.log('Creating/accessing table m_' + room + '...');
+        db.run('create table if not exists '
+            + 'm_' + room + ' ('
+            + 'id numeric primary key, '
+            + 'username text, '
+            + 'content text);');
+        console.log('...done.');
+
         // add the room to the rooms list if it doesnt exist already
         if (!rooms.includes(room)){
             rooms.push(room);
@@ -55,17 +71,36 @@ io.sockets.on('connection', function(socket){
 
     // What to do when a client sends a message to their room
     socket.on('chat', function(msg){
+        var lastId = 0;
+        var thisId;
+        // get the last message entry in the room
+        db.get('select * from m_' + currentRoom + ' order by id desc limit 1;', function(err, row) {
+            if(err) return console.error(err.message);
+            // find the id of the last message in this room
+            if(row) lastId = row.id;
+            // the new message should have an incremented id
+            // this will be one if the room has no messages in it yet
+            let thisId = lastId + 1;
+            var insertString = "insert into m_" + currentRoom + " values ("
+                + thisId + ", '"
+                + socket.username + "', '"
+                + msg + "');";
+            // write the new message to the database
+            db.run(insertString);
+        });
         // send this message to all users in the room
         io.in(currentRoom).emit('chat', msg);
         //log the message
         console.log("\""+msg +"\"" + " in room "+ currentRoom);
     });
+
     // what to do when someone changes their name
     socket.on('nameChange', function(newName){
         // change the username serverside
         socket.username = newName;
         io.in(currentRoom).emit('sendUserChangeName', socket.id, newName);
     });
+
     // what to do when someone disconnects
     socket.on('disconnect', function(){
         var conMsg  = clientIp + " ("+ socket.username +") has disconnected from room " + currentRoom;

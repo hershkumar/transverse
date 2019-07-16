@@ -40,12 +40,14 @@ $(function () {
         socket.username = "anon#" + id.substring(0,3);    
     });
     //gets the pathname, which is actually the room name
-    var room  = window.location.pathname;
+    var room  = window.location.pathname.substring(1);
     // tell the server that the client wishes to join a room
     socket.emit('room', room);
 
-    // show the room id on the page
-    $('#roomHeader').append(decodeURI(room.substring(1)));
+    // show the room id in the sidebar
+    var inviteLink = '<a href="' + window.location.href + '">' + window.location.href + '</a>';
+    $('#inviteLink').append(inviteLink);
+    //$('#roomHeader').append(decodeURI(room.substring(1)));
 
     // TeX preview handler
     $('#m').on('input', function() {
@@ -81,7 +83,7 @@ $(function () {
             else {
                 // adding a timestamp and username to the message
                 //msg = timestampMessage(msg, socket.username);
-                msg = socket.username + ": " + msg;
+                //msg = socket.username + ": " + msg;
                 // send the message over to the server
                 socket.emit('chat', msg);
 
@@ -106,11 +108,13 @@ $(function () {
         
     });
     // when the server tells the client that there has been a message sent
+    // add the message to the chat log
+    // TODO make the message contents indent
     socket.on('chat',function(msg){
         $('#messages').append($('<li>').text(msg));
         // typeset any new math
         // TODO only typeset the new list element
-        MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
     });
 
 
