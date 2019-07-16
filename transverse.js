@@ -120,12 +120,15 @@ function getUsernames(roomName){
     return returned;
 }
 // gets an array of arrays, each internal array has a list of usernames for socketsin the rooms
-// TODO fix this so that it works with the modified getUsernames function
 function getOnlineUsers(){
     var onlineUsers = [];
     updateRooms();
     for(var i = 0; i < rooms.length; i++){
-        onlineUsers.push(getUsernames(rooms[i]));
+        var temp = getUsernames(room[i]);
+        for (key in temp){
+            onlineUsers.push(temp[key]);    
+        }
+        
     }
     return onlineUsers;
 }

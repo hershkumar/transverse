@@ -20,9 +20,11 @@ function timestampMessage(msg, username){
 }
 // updates the sidebar element that lists all the users in the room (#users)
 function displayUsers(){
+    //clears the list for rewriting
     $('#users').empty();
+    // write every username to the list
     for (key in socketsConnected){
-        console.log("appending " + socketsConnected[key]);
+        // add a new list element with the username of the socket
         $('#users').append('<li>'+ socketsConnected[key] + '</li>');    
     }
 }
