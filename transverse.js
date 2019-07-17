@@ -22,7 +22,10 @@ app.get('/', function(req, res){
 
 // serve the chat.html file if they go to a subdomain
 app.get('/:room', function(req, res){
-    res.sendFile(__dirname + '/chat.html');
+    var roomName = req.params.room;
+    if (/^[a-z0-9]+$/i.test(roomName)){
+        res.sendFile(__dirname + '/chat.html');
+    }
 });
 
 
