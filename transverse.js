@@ -61,7 +61,7 @@ io.sockets.on('connection', function(socket){
         socket.emit('sendConnected', getUsernames(currentRoom));
         var conMsg  = clientIp + " ("+ socket.username +") has connected to room " + currentRoom;
         console.log(conMsg);
-        var connectMessage = socket.username + " has connected to the room";
+        var connectMessage = " has connected to the room";
         // logs the message in the database and sends it to the clients
         sendAndLogChat(currentRoom, connectMessage, socket.username);
         // send the socket id of the new socket to the clients
@@ -85,7 +85,8 @@ io.sockets.on('connection', function(socket){
     socket.on('disconnect', function(){
         var conMsg  = clientIp + " ("+ socket.username +") has disconnected from room " + currentRoom;
         console.log(conMsg);
-        var disconnectMessage = socket.username + " has left the room";
+        var disconnectMessage = " has left the room";
+
         sendAndLogChat(currentRoom, disconnectMessage, socket.username);
         io.in(currentRoom).emit('sendUserDisconnect', socket.id);
     });
