@@ -5,6 +5,13 @@ var io = require('socket.io')(http);
 var fs = require('fs');
 var sqlite3 = require('sqlite3').verbose();
 
+// CORS for fonts
+app.all('*', function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With");
+    next();
+});
+
 app.use(express.static('public'))
 var rooms = [];
 const port = 3000;

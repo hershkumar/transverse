@@ -37,7 +37,6 @@ function getMessageColor(username) {
     lastColor = lastLi.css('background-color');
     if(lastColor === undefined)
         lastColor = 'rgb(255, 255, 255)';
-    console.log(lastColor);
     if(username === lastUsername)
         return lastColor;
     rounded = true;
@@ -60,10 +59,21 @@ $(function () {
     // tell the server that the client wishes to join a room
     socket.emit('room', room);
 
-    // show the room id in the sidebar
-    var inviteLink = '<a href="' + window.location.href + '">' + window.location.href + '</a>';
-    $('#inviteLink').append(inviteLink);
-    //$('#roomHeader').append(decodeURI(room.substring(1)));
+    $('#copied').hide();
+    // show the invite link and make it copiable
+    var invite = '<input id="inviteinput" value="'
+        + window.location.href + '" data-clipboard-target="#inviteinput" readonly>';
+    $('#invite').append(invite);
+    var btn = document.getElementById('inviteinput');
+    var clipboard = new ClipboardJS(btn);
+    // deselect after copying
+    clipboard.on('success', function(e) {
+        //e.clearSelection();
+        $('#copied').show().fadeOut(3000);
+    });
+    clipboard.on('error', function(e) {
+        console.log(e);
+    });
 
     // TeX preview handler
     $('#m').on('input', function() {
