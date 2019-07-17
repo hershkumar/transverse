@@ -1,4 +1,5 @@
 var socketsConnected = {};
+var rounded = false;
 // gets the timestamp in date time format
 function getTimeStamp() {
     var now = new Date();
@@ -28,6 +29,21 @@ function displayUsers(){
         $('#users').append('<li>'+ socketsConnected[key] + '</li>');    
     }
 }
+
+function getMessageColor(username) {
+    rounded = false;
+    lastLi = $('ul#messages > li').last()
+    lastUsername = lastLi.attr('username');
+    lastColor = lastLi.css('background-color');
+    if(lastColor === undefined)
+        lastColor = 'rgb(255, 255, 255)';
+    console.log(lastColor);
+    if(username === lastUsername)
+        return lastColor;
+    rounded = true;
+    return (lastColor==='rgb(255, 255, 255)') ? 'rgb(223, 243, 245)' : 'rgb(255, 255, 255)';
+}
+
 //TODO: make sure mathjax is loaded before users can send messages
 $(function () {
     // generate a new socket that connects to the server
@@ -111,8 +127,15 @@ $(function () {
     // add the message to the chat log
     // TODO make the message contents indent
     socket.on('chat', function(msgObject) {
-        // <li id='' username=''>
-        $('#messages').append($('<li>').attr('id', msgObject.id).attr('username', msgObject.username).text(msgObject.message));
+        newLi = $('<li>').attr('id', msgObject.id)
+            .attr('username', msgObject.username)
+            .text(msgObject.username + ': ' + msgObject.message)
+            .css('background-color', getMessageColor(msgObject.username));
+        if(rounded)
+            $('ul#messages > li').last()
+                .css('border-bottom-left-radius', '10px')
+                .css('border-bottom-right-radius', '10px');
+        $('#messages').append(newLi);
         // typeset any new math
         // TODO only typeset the new list element
         MathJax.Hub.Queue(["Typeset", MathJax.Hub]);

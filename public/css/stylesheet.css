@@ -48,10 +48,6 @@ section#chat {
     padding: 15px 10px;
 }
 
-#messages li:nth-child(odd) {
-    background: #dff3f5;
-}
-
 form {
     position: absolute;
     bottom: 0;
