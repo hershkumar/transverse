@@ -160,12 +160,9 @@ function sendAndLogChat(room, messageText, username){
         // the new message should have an incremented id
         // this will be one if the room has no messages in it yet
         let thisId = lastId + 1;
-        var insertString = "insert into m_" + room + " values ("
-            + thisId + ", '"
-            + username + "', '"
-            + messageText + "');";
+        var insertString = "insert into m_" + room + " values (?, ?, ?);";
         // write the new message to the database
-        db.run(insertString);
+        db.run(insertString, [thisId, username, messageText]);
 
         // prepare a message object to send to everyone in the room
         msgObject = {
