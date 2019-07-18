@@ -101,6 +101,7 @@ section#chat {
     font-family: 'Computer Modern Serif', serif;
     font-weight: normal;
     font-style: normal;
+    word-wrap: break-word;
 }
 
 #messages li {
@@ -174,6 +175,7 @@ footer {
     display: inline;
     padding-left: 10px;
     width: 300px;
+    word-wrap: break-word;
 }
 
 

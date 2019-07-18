@@ -32,7 +32,7 @@ app.get('/:room', function(req, res){
     var roomName = req.params.room;
     if (/^[a-z0-9]+$/i.test(roomName)){
         res.sendFile(__dirname + '/chat.html');
-    }
+    }   
 });
 
 
